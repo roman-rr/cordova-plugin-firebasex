@@ -477,7 +477,10 @@ didDisconnectWithUser:(GIDGoogleUser *)user
             [mutableUserInfo setValue:response.actionIdentifier forKey:@"action"];
             
             // Send post request to update reminder event
-            [[[PharmacyActionableNotifications alloc] init] updateHistoryAction:mutableUserInfo AppDelegate:self];
+            // 1sec timeout for await localStorage webview
+            [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:NO block:^(NSTimer * _Nonnull timer) {
+                [[[PharmacyActionableNotifications alloc] init] updateHistoryAction:mutableUserInfo AppDelegate:self];
+            }];
         }
         
         // Print full message.
