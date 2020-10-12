@@ -73,7 +73,8 @@ static bool shouldEstablishDirectChannel = false;
             isFirebaseInitializedWithPlist = true;
         }
         
-      
+        // Delegate notification center here (prevent missing notifications)
+        [UNUserNotificationCenter currentNotificationCenter].delegate = self;
         
         shouldEstablishDirectChannel = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"shouldEstablishDirectChannel"] boolValue];
 
