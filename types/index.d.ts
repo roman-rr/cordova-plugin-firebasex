@@ -1,4 +1,4 @@
-interface IChannelOptions {
+export interface IChannelOptions {
     id: string
     name?: string
     description?: string
@@ -9,9 +9,11 @@ interface IChannelOptions {
     importance?: 0 | 1 | 2 | 3 | 4
     badge?: boolean
     visibility?: -1 | 0 | 1
+    usage?: number
+    streamType?: number
 }
 
-interface FirebasePlugin {
+export interface FirebasePlugin {
     getId(
         success: (value: string) => void,
         error: (err: string) => void
@@ -35,11 +37,24 @@ interface FirebasePlugin {
         success: (value: object) => void,
         error: (err: string) => void
     ): void
+    onOpenSettings(
+        success: () => void,
+        error: (err: string) => void
+    ): void
     grantPermission(
+        success: (value: boolean) => void,
+        error: (err: string) => void,
+        requestWithProvidesAppNotificationSettings?: boolean
+    ): void
+    hasPermission(
         success: (value: boolean) => void,
         error: (err: string) => void
     ): void
-    hasPermission(
+    grantCriticalPermission(
+        success: (value: boolean) => void,
+        error: (err: string) => void
+    ): void
+    hasCriticalPermission(
         success: (value: boolean) => void,
         error: (err: string) => void
     ): void
@@ -108,8 +123,18 @@ interface FirebasePlugin {
         userValue: string
     ): void
     setCrashlyticsCollectionEnabled(): void
+    didCrashOnPreviousExecution(
+        success?: (didCrashOnPreviousExecution: boolean) => void,
+        error?: (err: string) => void
+    ): void
     setCrashlyticsUserId(
         userId: string
+    ): void
+    setCrashlyticsCustomKey(
+        key: string,
+        value: string | number | boolean,
+        success?: () => void,
+        error?: (err: string) => void
     ): void
     sendCrash(): void
     logMessage(
@@ -128,6 +153,11 @@ interface FirebasePlugin {
         timeOutDuration: number,
         fakeVerificationCode?: string
     ): void
+    setLanguageCode(
+        lang: string,
+        success?: () => void,
+        error?: (err: string) => void
+    ): void
     createUserWithEmailAndPassword(
         email: string,
         password: string,
@@ -135,6 +165,12 @@ interface FirebasePlugin {
         error?: (err: string) => void
     ): void
     signInUserWithEmailAndPassword(
+        email: string,
+        password: string,
+        success?: () => void,
+        error?: (err: string) => void
+    ): void
+    authenticateUserWithEmailAndPassword(
         email: string,
         password: string,
         success?: () => void,
@@ -200,6 +236,15 @@ interface FirebasePlugin {
         error?: (err: string) => void
     ): void
     sendUserEmailVerification(
+        actionCodeSettings?: {
+            handleCodeInApp?: boolean,
+            url: string,
+            dynamicLinkDomain?: string,
+            iosBundleId?: string,
+            androidPackageName?: string,
+            installIfNotAvailable?: boolean,
+            minimumVersion?: string,
+        },
         success?: () => void,
         error?: (err: string) => void
     ): void
@@ -220,6 +265,12 @@ interface FirebasePlugin {
     registerAuthStateChangeListener(
         fn: (userSignedIn: boolean) => void,
     ): void
+    useAuthEmulator(
+        host: string,
+        port: number,
+        success?: () => void,
+        error?: (err: string) => void
+    ): void
     fetch(
         cacheExpirationSeconds: number,
         success: () => void,
@@ -233,14 +284,21 @@ interface FirebasePlugin {
         success: (activated: boolean) => void,
         error: (err: string) => void
     ): void
+    fetchAndActivate(
+        success: (activated: boolean) => void,
+        error: (err: string) => void
+    ): void
+    resetRemoteConfig(
+        success: () => void,
+        error: (err: string) => void
+    ): void
     getValue(
         key: string,
         success: (value: string) => void,
         error: (err: string) => void
     ): void
-    getByteArray(
-        key: string,
-        success: (value: object) => void,
+    getAll(
+        success: (values: object) => void,
         error: (err: string) => void
     ): void
     getInfo(
@@ -308,8 +366,28 @@ interface FirebasePlugin {
     ): void
     fetchFirestoreCollection(
         collection: string,
-        success: (collection: object) => void,
-        error: (err: string) => void
+        filters?: [object],
+        success?: (collection: object) => void,
+        error?: (err: string) => void
+    ): void
+    listenToDocumentInFirestoreCollection(
+        success: (event: object) => void,
+        error: (err: string) => void,
+        documentId: string,
+        collection: string,
+        includeMetadata?: boolean
+    ): void
+    listenToFirestoreCollection(
+        success: (event: object) => void,
+        error: (err: string) => void,
+        collection: string,
+        filters?: [object],
+        includeMetadata?: boolean
+    ): void
+    removeFirestoreListener(
+        success: () => void,
+        error: (err: string) => void,
+        listenerId: string
     ): void
 }
 declare var FirebasePlugin: FirebasePlugin;

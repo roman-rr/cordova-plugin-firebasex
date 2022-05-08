@@ -64,9 +64,11 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [Android Notification Sound](#android-notification-sound)
       - [Android 8.0 and above](#android-80-and-above)
       - [On Android 7 and below](#on-android-7-and-below)
+    - [Android cloud message types](#android-cloud-message-types)
   - [iOS notifications](#ios-notifications)
     - [iOS background notifications](#ios-background-notifications)
     - [iOS notification sound](#ios-notification-sound)
+    - [iOS critical notifications](#ios-critical-notifications)
     - [iOS badge number](#ios-badge-number)
     - [iOS actionable notifications](#ios-actionable-notifications)
   - [Data messages](#data-messages)
@@ -81,6 +83,8 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
 - [Google Tag Manager](#google-tag-manager)
   - [Android](#android-1)
   - [iOS](#ios-1)
+- [Performance Monitoring](#performance-monitoring)
+  - [Android Performance Monitoring Gradle plugin](#android-performance-monitoring-gradle-plugin)
 - [API](#api)
   - [Notifications and data messages](#notifications-and-data-messages)
     - [getToken](#gettoken)
@@ -90,6 +94,7 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [onApnsTokenReceived](#onapnstokenreceived)
     - [onMessageReceived](#onmessagereceived)
     - [grantPermission](#grantpermission)
+    - [grantCriticalPermission](#grantcriticalpermission)
     - [hasPermission](#haspermission)
     - [unregister](#unregister)
     - [isAutoInitEnabled](#isautoinitenabled)
@@ -113,9 +118,11 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [setUserProperty](#setuserproperty)
   - [Crashlytics](#crashlytics)
     - [setCrashlyticsCollectionEnabled](#setcrashlyticscollectionenabled)
+    - [didCrashOnPreviousExecution](#didcrashonpreviousexecution)
     - [isCrashlyticsCollectionEnabled](#iscrashlyticscollectionenabled)
     - [setCrashlyticsUserId](#setcrashlyticsuserid)
     - [sendCrash](#sendcrash)
+    - [setCrashlyticsCustomKey](#setcrashlyticscustomkey)
     - [logMessage](#logmessage)
     - [logError](#logerror)
   - [Authentication](#authentication)
@@ -136,6 +143,8 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [verifyPhoneNumber](#verifyphonenumber)
       - [Android](#android-2)
       - [iOS](#ios-2)
+    - [setLanguageCode](#setlanguagecode)
+    - [authenticateUserWithEmailAndPassword](#authenticateuserwithemailandpassword)
     - [authenticateUserWithGoogle](#authenticateuserwithgoogle)
       - [Android](#android-3)
     - [authenticateUserWithApple](#authenticateuserwithapple)
@@ -148,9 +157,11 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
   - [Remote Config](#remote-config)
     - [fetch](#fetch)
     - [activateFetched](#activatefetched)
+    - [fetchAndActivate](#fetchandactivate)
+    - [resetRemoteConfig](#resetremoteconfig)
     - [getValue](#getvalue)
-    - [getByteArray](#getbytearray)
     - [getInfo](#getinfo)
+    - [getAll](#getall)
     - [setConfigSettings](#setconfigsettings)
     - [setDefaults](#setdefaults)
   - [Performance](#performance)
@@ -167,6 +178,16 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [documentExistsInFirestoreCollection](#documentexistsinfirestorecollection)
     - [fetchDocumentInFirestoreCollection](#fetchdocumentinfirestorecollection)
     - [fetchFirestoreCollection](#fetchfirestorecollection)
+    - [listenToDocumentInFirestoreCollection](#listentodocumentinfirestorecollection)
+    - [listenToFirestoreCollection](#listentofirestorecollection)
+    - [removeFirestoreListener](#removefirestorelistener)
+  - [Functions](#functions)
+    - [functionsHttpsCallable](#functionshttpscallable)
+  - [Installations](#installations)
+    - [getInstallationId](#getinstallationid)
+    - [getInstallationToken](#getinstallationtoken)
+    - [getInstallationId](#getinstallationid-1)
+    - [registerInstallationIdChangeListener](#registerinstallationidchangelistener)
 - [Credits](#credits)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -202,14 +223,23 @@ The following plugin variables are used to specify the Firebase SDK versions as 
 - `ANDROID_FIREBASE_AUTH_VERSION`
 - `$ANDROID_FIREBASE_INAPPMESSAGING_VERSION`
 - `ANDROID_FIREBASE_FIRESTORE_VERSION`
+- `ANDROID_FIREBASE_FUNCTIONS_VERSION`
+- `ANDROID_FIREBASE_INSTALLATIONS_VERSION`
 - `ANDROID_FIREBASE_CRASHLYTICS_VERSION`
 - `ANDROID_FIREBASE_CRASHLYTICS_NDK_VERSION`
 - `ANDROID_GSON_VERSION`
+- `ANDROID_FIREBASE_PERF_GRADLE_PLUGIN_VERSION`
+- `ANDROID_FIREBASE_PERFORMANCE_MONITORING`
 See [Specifying Android library versions](#specifying-android-library-versions) for more info.
 
 - `ANDROID_ICON_ACCENT` - sets the default accent color for system notifications. See [Android Notification Color](#android-notification-color) for more info.
 - `ANDROID_FIREBASE_CONFIG_FILEPATH` - sets a custom filepath to `google-services.json` file as a path relative to the project root
     - e.g. `--variable ANDROID_FIREBASE_CONFIG_FILEPATH="resources/android/google-services.json"`
+- `ANDROID_FIREBASE_PERFORMANCE_MONITORING` - sets whether to add the [Firebase Performance Monitoring Gradle plugin for Android](https://firebase.google.com/docs/perf-mon/get-started-android?authuser=0#add-perfmon-plugin) to the build.
+    - e.g.  `--variable ANDROID_FIREBASE_PERFORMANCE_MONITORING=true`
+    - Defaults to `false` if not specified.
+- `ANDROID_FIREBASE_PERF_GRADLE_PLUGIN_VERSION` - overrides the default version of the [Firebase Performance Monitoring Gradle plugin for Android](https://firebase.google.com/docs/perf-mon/get-started-android?authuser=0#add-perfmon-plugin)
+- `ANDROID_GRPC_OKHTTP` - sets version of GRPC OKHTTP library.
 
 ### iOS only
 - `IOS_STRIP_DEBUG` - prevents symbolification of all libraries included via Cocoapods. See [Strip debug symbols](#strip-debug-symbols) for more info.
@@ -225,11 +255,18 @@ See [Specifying Android library versions](#specifying-android-library-versions) 
    - Note: Firebase Messaging iOS SDK version 7.0 will be a breaking change where the SDK will no longer support iOS Direct Channel API.
 - `IOS_FIREBASE_CONFIG_FILEPATH` - sets a custom filepath to `GoogleService-Info.plist` file as a path relative to the project root
     - e.g. `--variable IOS_FIREBASE_CONFIG_FILEPATH="resources/ios/GoogleService-Info.plist"`
+- `IOS_ENABLE_APPLE_SIGNIN` - enables the Sign In with Apple capability in Xcode.
+    - `--variable IOS_ENABLE_APPLE_SIGNIN=true`
+    - Ensure the associated app provisioning profile also has this capability enabled.
+- `IOS_ENABLE_CRITICAL_ALERTS_ENABLED` - enables the critical alerts capability
+  - `--variable IOS_ENABLE_CRITICAL_ALERTS_ENABLED=true`
+  - See [iOS critical notifications](#ios-critical-notifications)
+  - Ensure the associated app provisioning profile also has this capability enabled.
 
 ## Supported Cordova Versions
 - cordova: `>= 9`
-- cordova-android: `>= 8`
-- cordova-ios: `>= 5`
+- cordova-android: `>= 9`
+- cordova-ios: `>= 6`
 
 ## Supported Mobile Platform Versions
 - Android `>= 4.1`
@@ -256,7 +293,6 @@ You should be aware of the following breaking changes compared with `cordova-plu
     * `cordova-android@8` (Android platform)
     * `cordova-ios@5` (iOS platform)
 * Migrated to AndroidX from legacy Android Support Library
-    * add dependency on [cordova-plugin-androidx](https://github.com/dpa99c/cordova-plugin-androidx) and [cordova-plugin-androidx-adapter](https://github.com/dpa99c/cordova-plugin-androidx-adapter)
 * Migrated to Cocoapods to satisfy Firebase SDK dependencies on iOS
 * `onNotificationOpen()` renamed to `onMessageReceived()`
     * `tap` parameter is only set when user taps on a notification (not when a message is received from FCM)
@@ -378,6 +414,8 @@ The following plugin variables are used to specify the following Gradle dependen
 - `ANDROID_FIREBASE_PERF_VERSION` => `com.google.firebase:firebase-perf`
 - `ANDROID_FIREBASE_AUTH_VERSION` => `com.google.firebase:firebase-auth`
 - `ANDROID_FIREBASE_FIRESTORE_VERSION` => `com.google.firebase:firebase-firestore`
+- `$ANDROID_FIREBASE_FUNCTIONS_VERSION` => `com.google.firebase:firebase-functions`
+- `$ANDROID_FIREBASE_INSTALLATIONS_VERSION` => `com.google.firebase:firebase-installations`
 - `$ANDROID_FIREBASE_INAPPMESSAGING_VERSION` => `com.google.firebase:firebase-inappmessaging-display`
 - `ANDROID_FIREBASE_CRASHLYTICS_VERSION` => `com.google.firebase:firebase-crashlytics`
 - `ANDROID_FIREBASE_CRASHLYTICS_NDK_VERSION` => `com.google.firebase:firebase-crashlytics-ndk`
@@ -398,12 +436,23 @@ For example:
 
 ### AndroidX
 This plugin has been migrated to use [AndroidX (Jetpack)](https://developer.android.com/jetpack/androidx/migrate) which is the successor to the [Android Support Library](https://developer.android.com/topic/libraries/support-library/index).
-This is implemented by adding a dependency on [cordova-plugin-androidx](https://github.com/dpa99c/cordova-plugin-androidx) which enables AndroidX in the Android platform of a Cordova project.
-
 This is because the [major release of the Firebase and Play Services libraries on 17 June 2019](https://developers.google.com/android/guides/releases#june_17_2019) were migrated to AndroidX.
 
-Therefore if your project includes any plugins which are dependent on the legacy Android Support Library, you should add [cordova-plugin-androidx-adapter](https://github.com/dpa99c/cordova-plugin-androidx-adapter) to your project.
-This plugin will dynamically migrate any plugin code from the Android Support Library to AndroidX equivalents.
+The `cordova-android@9` platform adds implicit support for AndroidX so (if you haven't already done so) you should update to this platform version:
+
+    cordova platform rm android && cordova platform add android@latest
+
+and enable AndroidX by setting the following preference in your `config.xml`:
+
+    <preference name="AndroidXEnabled" value="true" />
+
+If you are unable to update from `cordova-android@8`, you can add [cordova-plugin-androidx](https://github.com/dpa99c/cordova-plugin-androidx) to your project which enables AndroidX in the Android platform project:
+
+    cordova plugin add cordova-plugin-androidx
+
+If your project includes any plugins which are dependent on the legacy Android Support Library (to which AndroidX is the successor), you should add [cordova-plugin-androidx-adapter](https://github.com/dpa99c/cordova-plugin-androidx-adapter) to your project which will dynamically migrate any plugin code from the Android Support Library to AndroidX equivalents:
+
+    cordova plugin add cordova-plugin-androidx-adapter
 
 ## Google Play Services and Firebase libraries
 Your Android build may fail if you are installing multiple plugins that use the Google Play Services library.
@@ -428,7 +477,7 @@ Therefore if you need to change the specified versions, you'll currently need to
 ### Cocoapods
 This plugin relies on `cordova@9`/`cordova-ios@5` support for the [CocoaPods dependency manager]( https://cocoapods.org/) in order to satisfy the iOS Firebase SDK library dependencies.
 
-Therefore please make sure you have `cocoapods@>=1.9` installed in your iOS build environment - setup instructions can be found [here](https://cocoapods.org/).
+Please make sure you have `cocoapods@>=1.11.2` installed in your iOS build environment - setup instructions can be found [here](https://cocoapods.org/).
 
 If building your project in Xcode, you need to open `YourProject.xcworkspace` (not `YourProject.xcodeproj`) so both your Cordova app project and the Pods project will be loaded into Xcode.
 
@@ -1012,6 +1061,22 @@ And in a data message by specifying it in the `data` section:
 - To play the default notification sound, set `"sound": "default"`.
 - To display a silent notification (no sound), omit the `sound` key from the message.
 
+### Android cloud message types
+The type of payload data in an FCM message influences how the message will be delivered to the app dependent on its run state, as outlined in [this Firebase documentation](https://firebase.google.com/docs/cloud-messaging/android/receive).
+
+|App run state | Notification payload | Data payload | Notification+Data payload |
+|----------|----------------------|--------------|---------------------------|
+| Foreground | `onMessageReceived` | `onMessageReceived` | `onMessageReceived` |
+| Background | System tray<sup>[[1]](#messagetypefootnote1)</sup>| `onMessageReceived` | Notification payload: System tray<sup>[[1]](#messagetypefootnote1)</sup> <br/> Data payload: `onMessageReceived` via extras of New Intent<sup>[[2]](#messagetypefootnote2)</sup> |
+| Not running | System tray<sup>[[1]](#messagetypefootnote1)</sup> | **Never received**<sup>[[3]](#messagetypefootnote3)</sup> | Notification payload: System tray<sup>[[1]](#messagetypefootnote1)</sup> <br/> Data payload: `onMessageReceived` via extras of Launch Intent<sup>[[2]](#messagetypefootnote2)</sup> |
+
+<a name="messagetypefootnote1">1</a>: If user taps the system notification, its payload is delivered to `onMessageReceived`
+
+<a name="messagetypefootnote2">2</a>: The data payload is only delivered as an extras Bundle Intent if the user taps the system notification.
+Otherwise it will not be delivered as outlined in [this Firebase documentation](https://firebase.google.com/docs/cloud-messaging/concept-options#notification-messages-with-optional-data-payload).
+
+<a name="messagetypefootnote3">3</a>: If the app is not running/has been task-killed when the data message arrives, it will never be received by the app.
+
 ## iOS notifications
 Notifications on iOS can be customised to specify the sound and badge number that's displayed when the notification arrives.
 
@@ -1096,6 +1161,11 @@ In a data message, specify the `notification_ios_sound` key in the `data` sectio
 }
 ```
 
+### iOS critical notifications
+iOS offers the option to send critical push notifications. These kind of notifications appear even when your iPhone or iPad is in Do Not Disturb mode or silenced. Sending critical notifications requires a special entitlement that needs to be issued by Apple.
+Use the pugin setting `IOS_ENABLE_CRITICAL_ALERTS_ENABLED=true` to enable the critical push notifications capability.
+A user also needs to explicitly [grant permission](#grantcriticalpermission) to receive critical alerts.
+
 ### iOS badge number
 In a notification message, specify the `badge` key in the `apns.payload.aps` section, for example:
 
@@ -1147,19 +1217,21 @@ To use them in your app you must do the following:
           "category": "news",
           "actions": [
             {
-              "id": "read", "title": "Read"
+              "id": "read", "title": "Read", "foreground": true
             },
             {
               "id": "skip", "title": "Skip"
             },
             {
-              "id": "add", "title": "Add to list"
+              "id": "delete", "title": "Delete", "destructive": true
             }
           ]
         }
       ]
     }
 ```
+
+Note the `foreground` and `destructive` options correspond to the equivalent [UNNotificationActionOptions](https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions?language=objc).
 
 2. Reference it as a resource file in your `config.xml`:
 
@@ -1218,6 +1290,15 @@ Notes:
 - If your app is in the background/not running when the notification message arrives and a system notification is displayed, if the user chooses an action (instead of tapping the notification dialog body), your app will not be launched/foregrounded but [`onMessageReceived()`](#onmessagereceived) will be invoked, enabling your app code to handle the user's action selection silently in the background.
 - You can test out actionable notifications by building and running [example project](https://github.com/dpa99c/cordova-plugin-firebasex-test) app and sending the [ios_notification_actionable.json](https://github.com/dpa99c/cordova-plugin-firebasex-test/blob/master/messages/ios_notification_actionable.json) FCM message using the [built-in FCM v1 HTTP API client](https://github.com/dpa99c/cordova-plugin-firebasex-test#messaging-client) which contains a category defined in the example [pn-actions.json](https://github.com/dpa99c/cordova-plugin-firebasex-test/blob/master/res/ios/pn-actions.json).
 
+### iOS notification settings button
+
+<img width="300" src="https://i.stack.imgur.com/84LDU.jpg">
+
+Adding such a Button is possible with this Plugin.
+To enable this Feature, you need to pass `true` for **requestWithProvidesAppNotificationSettings** when you [request the Permission](#grantpermission).
+
+You then need to subscribe to `onOpenSettings` and open your apps notification settings page.
+
 ## Data messages
 FCM data messages are sent as an arbitrary k/v structure and by default are passed to the app for it to handle them.
 
@@ -1252,11 +1333,24 @@ On Android:
 
 The following Android-specific keys are supported and should be placed inside the `data` section:
 
+- `notification_android_id` - Identifier used to replace existing notifications in the notification drawer
+    - If not specified, each request creates a new notification.
+    - If specified and a notification with the same tag is already being shown, the new notification replaces the existing one in the notification drawer.
+- `notification_android_body_html` - If is passed, the body of a notification is processed as if it were html, you can use `<b>, <i> or <s>`
+    - If not specified, the body of the notification will be processed as plain text.
 - `notification_android_icon` - name of a [custom notification icon](#android-custom-notification-icons) in the drawable resources
     - if not specified, the plugin will use the default `notification_icon` if it exists; otherwise the default app icon will be displayed
     - if a [large icon](#android-large-notification-icon) has been defined, it will also be displayed in the system notification.
 - `notification_android_color` - the [color accent](#android-notification-color) to use for the small notification icon
     - if not specified, the default color accent will be used
+- `notification_android_image` - Specifies the image notification
+    - if not specified, the notification will not show any image
+- `notification_android_image_type` - Specifies the image notification type
+    - Possible values:
+        - `square` - The image is displayed in the default format.
+        - `circle` - This notification displays the image in circular format.
+        - `big_picture` - Displays the image like `square` type, but the notification can be expanded and show the image in a big picture, example: https://developer.android.com/training/notify-user/expanded#image-style
+    - Defaults to `square` if not specified.
 - `notification_android_channel_id` - ID of the [notification channel](#android-notification-channels) to use to display the notification
     - Only applies to Android 8.0 and above
     - If not specified, the [default notification channel](#default-android-channel-properties) will be used.
@@ -1310,6 +1404,8 @@ Example data message with Android notification keys:
     "notification_android_visibility": "1",
     "notification_android_color": "#ff0000",
     "notification_android_icon": "coffee",
+    "notification_android_image": "https://example.com/avatar.jpg",
+    "notification_android_image_type": "circle",
     "notification_android_sound": "my_sound",
     "notification_android_vibrate": "500, 200, 500",
     "notification_android_lights": "#ffff0000, 250, 250"
@@ -1381,6 +1477,19 @@ Download your container-config json file from Tag Manager and add a `<resource-f
     <resource-file src="GTM-YYYYYYY.json" />
     ...
 ```
+
+# Performance Monitoring
+The [Firebase Performance Monitoring SDK](https://firebase.google.com/docs/perf-mon) enables you to measure, monitor and analyze the performance of your app in the Firebase console.
+It enables you to measure metrics such as app startup, screen rendering and network requests.
+
+## Android Performance Monitoring Gradle plugin
+- The [Firebase Performance Monitoring Gradle plugin for Android](https://firebase.google.com/docs/perf-mon/get-started-android?authuser=0#add-perfmon-plugin) is required to enable automatic monitoring of network requests in Android apps.
+- However, as [outlined here](https://proandroiddev.com/hidden-costs-of-firebase-performance-and-how-to-avoid-them-a54f96bafcb1), adding this Gradle plugin to your Android builds can significantly increase Android build times and memory usage.
+- For this reason, the Gradle plugin is not added to your Android app builds by default.
+- If you want to add it to make use of automatic network request monitoring on Android, set the `ANDROID_FIREBASE_PERFORMANCE_MONITORING` [plugin variable](#plugin-variables) flag at plugin install time:
+    - `--variable ANDROID_FIREBASE_PERFORMANCE_MONITORING=true`
+- If you choose to add it, the Gradle plugin currently requires Gradle v6.1.1 and Android Studio v4.0 or above.
+- Note: on iOS when this plugin is installed, automatic network request monitoring takes place with requiring any extra configuration.
 
 # API
 The list of available methods for this plugin is described below.
@@ -1477,6 +1586,22 @@ FirebasePlugin.onApnsTokenReceived(function(apnsToken) {
 });
 ```
 
+### onOpenSettings
+iOS only
+Registers a callback function to invoke when the AppNotificationSettingsButton is tapped by the user
+
+**Parameters**:
+- {function} success - callback function which will be invoked without any argument
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.onOpenSettings(function() {
+    console.log("Redirect to App Notification Settings Page here");
+}, function(error) {
+    console.error(error);
+});
+```
+
 ### onMessageReceived
 Registers a callback function to invoke when:
 - a notification or data message is received by the app
@@ -1533,11 +1658,23 @@ iOS only (Android will always return true).
 **Parameters**:
 - {function} success - callback function which will be passed the {boolean} permission result as an argument
 - {function} error - callback function which will be passed a {string} error message as an argument
+- {boolean} requestWithProvidesAppNotificationSettings - boolean which indicates if app provides AppNotificationSettingsButton (**iOS12+ only**)
+
+### grantCriticalPermission
+Grant critical permission to receive critical push notifications (will trigger additional prompt) and return `hasPermission: true`.
+iOS 12.0+ only (Android will always return true).
+
+**Parameters**:
+- {function} success - callback function which will be passed the {boolean} permission result as an argument
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+**Critical push notifications require a special entitlement that needs to be issued by Apple.**
 
 ```javascript
 FirebasePlugin.grantPermission(function(hasPermission){
     console.log("Permission was " + (hasPermission ? "granted" : "denied"));
 });
+
 ```
 ### hasPermission
 Check permission to receive push notifications and return the result to a callback function as boolean.
@@ -1551,6 +1688,22 @@ On Android, returns true if remote notifications are enabled.
 ```javascript
 FirebasePlugin.hasPermission(function(hasPermission){
     console.log("Permission is " + (hasPermission ? "granted" : "denied"));
+});
+```
+
+### hasCriticalPermission
+Check permission to receive critical push notifications and return the result to a callback function as boolean.
+iOS 12.0+ only (Android will always return true).
+
+**Critical push notifications require a special entitlement that needs to be issued by Apple.**
+
+**Parameters**:
+- {function} success - callback function which will be passed the {boolean} permission result as an argument
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.hasCriticalPermission(function(hasPermission){
+    console.log("Permission to send critical push notificaitons is " + (hasPermission ? "granted" : "denied"));
 });
 ```
 
@@ -1692,6 +1845,8 @@ A default channel is created by the plugin at app startup; the properties of thi
 
 Calling on Android 7 or below or another platform will have no effect.
 
+Note: Each time you want to play a different sound, you need to create a new channel with a new unique ID - do not re-use the same channel ID even if you have called `deleteChannel()` ([see this comment](https://github.com/dpa99c/cordova-plugin-firebasex/issues/560#issuecomment-798407467)).
+
 **Parameters**:
 - {object} - channel configuration object (see below for object keys/values)
 - {function} success - callback function which will be call on successful channel creation
@@ -1745,7 +1900,15 @@ var channel  = {
     //-1 - secret - Do not reveal any part of the notification on a secure lockscreen.
     //0 - private - Show the notification on all lockscreens, but conceal sensitive or private information on secure lockscreens.
     //1 - public - Show the notification in its entirety on all lockscreens.
-    visibility: 1
+    visibility: 1,
+
+    // Optionally specify the usage type of the notification. Defaults to USAGE_NOTIFICATION_RINGTONE ( =6)
+    // For a list of all possible usages, see https://developer.android.com/reference/android/media/AudioAttributes.Builder#setUsage(int)
+
+    usage: 6,
+    // Optionally specify the stream type of the notification channel.
+    // For a list of all possible values, see https://developer.android.com/reference/android/media/AudioAttributes.Builder#setLegacyStreamType(int)
+    streamType: 5,
 };
 
 // Create the channel
@@ -1950,7 +2113,12 @@ Log an event using Analytics:
 
 **Parameters**:
 - {string} eventName - name of event to log to Firebase Analytics
-- {object} eventProperties - key/value object of event properties (must be serializable)
+    - [Limit](https://support.google.com/firebase/answer/9237506?hl=en) of 40 characters.
+    - Dots are not allowed in eventName.
+- {object} eventProperties - key/value object of custom event properties.
+    - This must be a flat (non-nested) object.
+    - The value must be a primitive type such as string/number/etc. (not a complex object such as array or nested object).
+    - [Limit](https://support.google.com/firebase/answer/9237506?hl=en) of 40 characters for parameter name and 100 characters for parameter value.
 
 ```javascript
 FirebasePlugin.logEvent("select_content", {content_type: "page_view", item_id: "home"});
@@ -1980,8 +2148,8 @@ FirebasePlugin.setUserId("user_id");
 Set a user property for use in Analytics:
 
 **Parameters**:
-- {string} userName - name of user property to set in Firebase Analytics
-- {string} userName - value of user property to set in Firebase Analytics
+- {string} name - name of user property to set in Firebase Analytics
+- {string} value - value of user property to set in Firebase Analytics
 
 ```javascript
 FirebasePlugin.setUserProperty("name", "value");
@@ -2007,6 +2175,22 @@ FirebasePlugin.setCrashlyticsCollectionEnabled(shouldSetEnabled, function(){
 });
 ```
 
+### didCrashOnPreviousExecution
+Checks whether the app crashed on its previous run.
+
+**Parameters**:
+- {function} success - callback function which will be invoked on success.
+Will be passed a {boolean} indicating whether the app crashed on its previous run.
+- {function} error - (optional) callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.didCrashOnPreviousExecution(function(didCrashOnPreviousExecution){
+    console.log(`Did crash on previous execution: ${didCrashOnPreviousExecution}`));
+}, function(error){
+    console.error(`Error getting Crashlytics did crash on previous execution: ${error}`);
+});
+```
+
 ### isCrashlyticsCollectionEnabled
 Indicates whether Crashlytics collection setting is currently enabled.
 
@@ -2023,7 +2207,6 @@ FirebasePlugin.isCrashlyticsCollectionEnabled(function(enabled){
 });
 ```
 
-
 ### setCrashlyticsUserId
 Set Crashlytics user identifier.
 
@@ -2039,7 +2222,6 @@ See [the Firebase docs for more](https://firebase.google.com/docs/crashlytics/cu
 FirebasePlugin.setCrashlyticsUserId("user_id");
 ```
 
-
 ### sendCrash
 Simulates (causes) a fatal native crash which causes a crash event to be sent to Crashlytics (useful for testing).
 See [the Firebase documentation](https://firebase.google.com/docs/crashlytics/force-a-crash?authuser=0#force_a_crash_to_test_your_implementation) regarding crash testing.
@@ -2048,6 +2230,36 @@ Crashes will appear under `Event type = "Crashes"` in the Crashlytics console.
 **Parameters**: None
 
 ```javascript
+FirebasePlugin.sendCrash();
+```
+
+### setCrashlyticsCustomKey
+Records a custom key and value to be associated with subsequent fatal and non-fatal reports.
+
+Multiple calls to this method with the same key will update the value for that key.
+
+The value of any key at the time of a fatal or non-fatal event will be associated with that event.
+
+Keys and associated values are visible in the session view on the Firebase Crashlytics console.
+
+A maximum of 64 key/value pairs can be written, and new keys added beyond that limit will be ignored. Keys or values that exceed 1024 characters will be truncated.
+
+**Parameters**:
+- {string} key - A unique key
+- {string | number | boolean} value - 	A value to be associated with the given key
+- {function} success - (optional) callback function which will be invoked on success
+- {function} error - (optional) callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.setCrashlyticsCustomKey('number', 3.5, function(){
+        console.log("set custom key: number, with value: 3.5");
+    },function(error){
+        console.error("Failed to set-custom key", error);
+    });
+FirebasePlugin.setCrashlyticsCustomKey('bool', true);
+FirebasePlugin.setCrashlyticsCustomKey('string', 'Ipsum lorem');
+// Following is just used to trigger report for Firebase
+FirebasePlugin.logMessage("about to send a crash for testing!");
 FirebasePlugin.sendCrash();
 ```
 
@@ -2070,6 +2282,7 @@ In a Cordova app, you may use this to log unhandled Javascript exceptions, for e
 
 The event will appear under `Event type = "Non-fatals"` in the Crashlytics console.
 The error message will appear in the `Logs` section of the non-fatal error event.
+Note that logged errors will only be sent to the Crashlytics server on the next full app restart.
 Also logs the error message to the native device console.
 
 **Parameters**:
@@ -2247,15 +2460,31 @@ Sends a verification email to the currently configured email address of the curr
 When the user opens the contained link, their email address will have been verified.
 
 **Parameters**:
+- {object} actionCodeSettings - action code settings based on [Passing State in Email Actions Parameters](https://firebase.google.com/docs/auth/web/passing-state-in-email-actions#passing_statecontinue_url_in_email_actions) :
+    - {boolean} handleCodeInApp - Whether the email action link will be opened in a mobile app or a web link first
+    - {string} url - Continue URL after email has been verified
+    - {string} dynamicLinkDomain - Sets the dynamic link domain to use for the current link if it is to be opened using Firebase Dynamic Links
+    - {string} iosBundleId - Sets the iOS bundle ID. This will try to open the link in an iOS app if it is installed
+    - {string} androidPackageName - Sets the Android package name. This will try to open the link in an android app if it is installed
+    - {boolean} installIfNotAvailable - Install if the provided app package name is not already installed on the users device (Android only)
+    - {string} minimumVersion - minimum app version required (Android Only)
 - {function} success - callback function to call on success
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
-    FirebasePlugin.sendUserEmailVerification(function() {
-        console.log("User verification email successfully sent");
-    }, function(error) {
-        console.error("Failed to send user verification email: " + error);
-    });
+    FirebasePlugin.sendUserEmailVerification({
+    handleCodeInApp: true,
+    url: "http://www.example.com",
+    dynamicLinkDomain: "example.page.link",
+    iosBundleId: "com.example.ios",
+    androidPackageName: "com.example.android",
+    installIfNotAvailable: true,
+    minimumVersion: "12",
+}, function() {
+    console.log("User verification email successfully sent");
+}, function(error) {
+    console.error("Failed to send user verification email: " + error);
+});
 ```
 
 ### updateUserPassword
@@ -2477,6 +2706,44 @@ You can [set up reCAPTCHA verification for iOS](https://firebase.google.com/docs
 
 This adds the `REVERSED_CLIENT_ID` from the `GoogleService-Info.plist` to the list of custom URL schemes in your Xcode project, so you don't need to do this manually.
 
+### setLanguageCode
+Sets the user-facing language code for auth operations that can be internationalized, such as sendEmailVerification() or verifyPhoneNumber(). This language code should follow the conventions defined by the IETF in BCP47.
+
+**Parameters**:
+- {string} lang - language to change, ex: 'fr' for french
+
+Example usage:
+
+```javascript
+    FirebasePlugin.setLanguageCode('fr'); // will switch to french
+```
+
+### authenticateUserWithEmailAndPassword
+Authenticates the user with email/password-based user account to obtain a credential that can be used to sign the user in/link to an existing user account/reauthenticate the user.
+
+**Parameters**:
+- {string} email - user email address
+- {string} password - user password
+- {function} success - callback function to pass {object} credentials to as an argument. The credential object has the following properties:
+    - {string} id - the identifier of a native credential object which can be used for signing in the user.
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+Example usage:
+
+```javascript
+    FirebasePlugin.authenticateUserWithEmailAndPassword(email, password, function(credential) {
+        console.log("Successfully authenticated with email/password");
+        FirebasePlugin.reauthenticateWithCredential(credential, function() {
+            console.log("Successfully re-authenticated");
+        }, function(error) {
+            console.error("Failed to re-authenticate", error);
+        });
+        // User is now signed in
+    }, function(error) {
+        console.error("Failed to authenticate with email/password", error);
+    });
+```
+
 ### authenticateUserWithGoogle
 Authenticates the user with a Google account to obtain a credential that can be used to sign the user in/link to an existing user account/reauthenticate the user.
 
@@ -2484,6 +2751,7 @@ Authenticates the user with a Google account to obtain a credential that can be 
 - {string} clientId - your OAuth 2.0 client ID - [see here](https://developers.google.com/identity/sign-in/android/start-integrating#get_your_backend_servers_oauth_20_client_id) how to obtain it.
 - {function} success - callback function to pass {object} credentials to as an argument. The credential object has the following properties:
     - {string} id - the identifier of a native credential object which can be used for signing in the user.
+    - {string} idToken - the identiy token from Google account. Could be useful if you want to sign-in with on JS layer.
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 Example usage:
@@ -2509,6 +2777,11 @@ For details how to do the above, see the [Google Sign-In on Android page](https:
 
 ### authenticateUserWithApple
 Authenticates the user with an Apple account using Sign In with Apple to obtain a credential that can be used to sign the user in/link to an existing user account/reauthenticate the user.
+
+To use Sign In with Apple you must ensure your app's provisioning profile has this capability and it is enabled in your Xcode project.
+You can enable the capability in Xcode by setting the `IOS_ENABLE_APPLE_SIGNIN` plugin variable at plugin installation time:
+
+    cordova plugin add cordova-plugin-firebasex --variable IOS_ENABLE_APPLE_SIGNIN=true
 
 **Parameters**:
 - {function} success - callback function to pass {object} credentials to as an argument. The credential object has the following properties:
@@ -2644,13 +2917,34 @@ Example usage:
     });
 ```
 
+### useAuthEmulator
+Instruments your app to talk to the [Firebase Authentication emulator](https://firebase.google.com/docs/emulator-suite/connect_auth).
+
+
+**Parameters**:
+- {string} host - hostname or IP address of the Authentication emulator.
+- {integer} port - port of the Authentication emulator.
+- {function} success - callback function to call on success
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+Example usage:
+
+```javascript
+FirebasePlugin.useAuthEmulator('localhost', 9099, function() {
+    console.log("Using Firebase Authentication emulator");
+}, function(error) {
+    console.error("Failed to enable the Firebase Authentication emulator", error);
+});
+```
+
 ## Remote Config
 
 ### fetch
 Fetch Remote Config parameter values for your app:
 
 **Parameters**:
-- {integer} cacheExpirationSeconds (optional) - cache expiration in seconds
+- {integer} cacheExpirationSeconds (optional) - cache expiration in seconds.
+According to [the documentation](https://firebase.google.com/docs/remote-config/use-config-web#throttling) the default behavior is to cache for 12 hours, so if you want to quickly detect changes make sure you set this value.
 - {function} success - callback function on successfully fetching remote config
 - {function} error - callback function which will be passed a {string} error message as an argument
 
@@ -2672,7 +2966,7 @@ FirebasePlugin.fetch(600, function () {
 Activate the Remote Config fetched config:
 
 **Parameters**:
-- {function} success - callback function which will be passed a {boolean} argument indicating whether fetched config was successfully activated
+- {function} success - callback function which will be passed a {boolean} argument indicating whether result the current call activated the fetched config.
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
@@ -2685,37 +2979,52 @@ FirebasePlugin.activateFetched(function(activated) {
 });
 ```
 
-### getValue
-Retrieve a Remote Config value:
+### fetchAndActivate
+Fetches and activates the Remote Config in a single operation.
 
 **Parameters**:
-- {string} key - key for which to fetch associated value
-- {function} success - callback function which will be passed a {any} argument containing the value stored against the specified key.
+- {function} success - callback function which will be passed a {boolean} argument indicating whether result the current call activated the fetched config.
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
-FirebasePlugin.getValue("key", function(value) {
-    console.log(value);
+FirebasePlugin.fetchAndActivate(function(activated) {
+    // activated will be true if there was a fetched config activated,
+    // or false if no fetched config was found, or the fetched config was already activated.
+    console.log(activated);
 }, function(error) {
     console.error(error);
 });
 ```
 
-### getByteArray
+### resetRemoteConfig
+Deletes all activated, fetched and defaults configs and resets all Firebase Remote Config settings.
+
 Android only.
-Retrieve a Remote Config byte array:
 
 **Parameters**:
-- {string} key - key for which to fetch associated value
-- {function} success - callback function which will be passed a {string} argument containing the Base64 encoded string that represents the value stored against the specified key.
+- {function} success - callback function to call on successful reset.
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
-FirebasePlugin.getByteArray("key", function(bytes) {
-    // a Base64 encoded string that represents the value for "key"
-    console.log(bytes.base64);
-    // a numeric array containing the values of the byte array (i.e. [0xFF, 0x00])
-    console.log(bytes.array);
+FirebasePlugin.resetRemoteConfig(function() {
+    console.log("Successfully reset remote config");
+}, function(error) {
+    console.error("Error resetting remote config: " + error);
+});
+```
+
+### getValue
+Retrieve a Remote Config value:
+
+**Parameters**:
+- {string} key - key for which to fetch associated value
+- {function} success - callback function which will be passed a {string} argument containing the value stored against the specified key.
+If the expected value is of a different primitive type (e.g. `boolean`, `integer`) you should cast the value to the appropriate type.
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.getValue("key", function(value) {
+    console.log(value);
 }, function(error) {
     console.error(error);
 });
@@ -2730,11 +3039,9 @@ Get the current state of the FirebaseRemoteConfig singleton object:
 
 ```javascript
 FirebasePlugin.getInfo(function(info) {
-    // the status of the developer mode setting (true/false)
-    console.log(info.configSettings.developerModeEnabled);
-    // (iOS only) for how much (secs) fetch cache is valid and data will not be refetched
+    // how many (secs) fetch cache is valid and data will not be refetched
     console.log(info.configSettings.minimumFetchInterval);
-    // (iOS only) value in seconds to abandon a pending fetch request made to the backend
+    // value in seconds to abandon a pending fetch request made to the backend
     console.log(info.configSettings.fetchTimeout);
     // the timestamp (milliseconds since epoch) of the last successful fetch
     console.log(info.fetchTimeMillis);
@@ -2749,44 +3056,69 @@ FirebasePlugin.getInfo(function(info) {
 });
 ```
 
-### setConfigSettings
-Android only.
-Change the settings for the FirebaseRemoteConfig object's operations:
+### getAll
+Returns all Remote Config as key/value pairs
 
 **Parameters**:
-- {object} configSettings - object specifying the remote config settings
+- {function} success - callback function which will be passed an {object} argument where key is the remote config key and value is the value as a string. If the expected key value is a different primitive type then cast it to the appropriate type.
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.getAll(function(values) {
+    for(var key in values){
+        console.log(key + "=" + values[key]);
+    }
+}, function(error) {
+    console.error(error);
+});
+```
+
+### setConfigSettings
+Changes the default Remote Config settings:
+- Fetch timeout sets how long your app should wait for new Remote Config values before timing out.
+    - Useful when you don’t want your application to wait longer than X seconds to fetch new Remote Config values
+- Minimum fetch interval sets the minimum interval for which you want to check for any new Remote Config parameter values.
+    - Keep in mind that setting too short an interval in production might cause your app to run into rate limits.
+
+**Parameters**:
+- {integer} fetchTimeout - fetch timeout in seconds.
+    - Default is 60 seconds.
+    - Specify as `null` value to omit setting this value.
+- {integer} minimumFetchInterval - minimum fetch inteval in seconds.
+    - Default is 12 hours.
+    - Specify as `null` value to omit setting this value.
+    - Set to `0` to disable minimum interval entirely (**DO NOT** do this in production)
 - {function} success - callback function to be call on successfully setting the remote config settings
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
-var settings = {
-    developerModeEnabled: true
-}
-FirebasePlugin.setConfigSettings(settings);
+var fetchTimeout = 60;
+var minimumFetchInterval = 3600;
+FirebasePlugin.setConfigSettings(fetchTimeout, minimumFetchInterval, function(){
+    console.log("Successfully set Remote Config settings");
+}, function(error){
+   console.error("Error setting Remote Config settings: " + error);
+});
 ```
 
 ### setDefaults
-Android only.
-Set defaults in the Remote Config:
+Sets in-app default values for your Remote Config parameters until such time as values are populated from the remote service via a fetch/activate operation.
 
 **Parameters**:
-- {object} defaultSettings - object specifying the default remote config settings
-- {function} success - callback function to be call on successfully setting the remote config setting defaults
+- {object} defaults - object specifying the default remote config settings
+    - key is the name of your Remote Config parameter
+    - value is the default value
+- {function} success - callback function to be call on successfully setting the remote config parameter defaults
 - {function} error - callback function which will be passed a {string} error message as an argument
 
 ```javascript
 // define defaults
 var defaults = {
-    // map property name to value in Remote Config defaults
-    mLong: 1000,
-    mString: 'hello world',
-    mDouble: 3.14,
-    mBoolean: true,
-    // map "mBase64" to a Remote Config byte array represented by a Base64 string
-    // Note: the Base64 string is in an array in order to differentiate from a string config value
-    mBase64: ["SGVsbG8gV29ybGQ="],
-    // map "mBytes" to a Remote Config byte array represented by a numeric array
-    mBytes: [0xFF, 0x00]
+    my_int: 1,
+    my_double: 3.14,
+    my_boolean: true,
+    my_string: 'hello world',
+    my_json: {"foo": "bar"}
 }
 // set defaults
 FirebasePlugin.setDefaults(defaults);
@@ -3001,7 +3333,9 @@ FirebasePlugin.documentExistsInFirestoreCollection(documentId, collection, funct
 ### fetchDocumentInFirestoreCollection
 Fetches an existing document with the given ID from a Firestore collection.
 
-Note: If the no document with the specified ID exists in the collection, the error callback will be invoked.
+Notes:
+- If no document with the specified ID exists in the collection, the error callback will be invoked.
+- If the document contains references to another document, they will be converted to the document path string to avoid circular reference issues.
 
 **Parameters**:
 - {string} documentId - document ID of the document to fetch.
@@ -3023,11 +3357,36 @@ FirebasePlugin.fetchDocumentInFirestoreCollection(documentId, collection, functi
 ### fetchFirestoreCollection
 Fetches all the documents in the specific collection.
 
+Notes:
+- If no collection with the specified name exists, the error callback will be invoked.
+- If the documents in the collection contain references to another document, they will be converted to the document path string to avoid circular reference issues.
+
 **Parameters**:
 - {string} collection - name of top-level collection to fetch.
-- {array} filters - a list of filters to sort/filter the documents returned from your collection.
+- {array} filters (optional) - a list of filters to sort/filter the documents returned from your collection.
     - Supports `where`, `orderBy`, `startAt`, `endAt` and `limit` filters.
-    - See the [Firestore documentation](https://firebase.google.com/docs/firestore/query-data/queries) for more details.
+        - See the [Firestore documentation](https://firebase.google.com/docs/firestore/query-data/queries) for more details.
+    - Each filter is defined as an array of filter components:
+        - `where`: [`where`, `fieldName`, `operator`, `value`, `valueType`]
+            - `fieldName` - name of field to match
+            - `operator` - operator to apply to match
+                - supported operators: `==`, `<`, `>`, `<=`, `>=`, `array-contains`
+            - `value` - field value to match
+            - `valueType` (optional) - type of variable to fetch value as
+                - supported types: `string`, `boolean`, `integer`, `double`, `long`
+                - if not specified, defaults to `string`
+        - `startAt`: [`startAt`, `value`, `valueType`]
+            - `value` - field value to start at
+            - `valueType` (optional) - type of variable to fetch value as (as above)
+        - `endAt`: [`endAt`, `value`, `valueType`]
+            - `value` - field value to end at
+            - `valueType` (optional) - type of variable to fetch value as (as above)
+        - `orderBy`: [`orderBy`, `fieldName`, `sortDirection`]
+            - `fieldName` - name of field to order by
+            - `sortDirection` - direction to order in: `asc` or `desc`
+        - `limit`: [`limit`, `value`]
+            - `value` - `integer` defining maximum number of results to return.
+
 - {function} success - callback function to call on successfully deleting the document.
 Will be passed an {object} containing all the documents in the collection, indexed by document ID.
 If a Firebase collection with that name does not exist or it contains no documents, the object will be empty.
@@ -3036,14 +3395,327 @@ If a Firebase collection with that name does not exist or it contains no documen
 ```javascript
 var collection = "my_collection";
 var filters = [
-    ['where', 'field', '==', 'value'],
-    ['orderBy', 'field', 'desc']
+    ['where', 'my_string', '==', 'foo'],
+    ['where', 'my_integer', '>=', 0, 'integer'],
+    ['where', 'my_boolean', '==', true, 'boolean'],
+    ['orderBy', 'an_integer', 'desc'],
+    ['startAt', 'an_integer', 10, 'integer'],
+    ['endAt', 'an_integer', 100, 'integer'],
+    ['limit', 100000]
 ];
+
 FirebasePlugin.fetchFirestoreCollection(collection, filters, function(documents){
     console.log("Successfully fetched collection: "+JSON.stringify(documents));
 }, function(error){
     console.error("Error fetching collection: "+error);
 });
+```
+
+### listenToDocumentInFirestoreCollection
+Adds a listener to detect real-time changes to the specified document.
+
+Note: If the document contains references to another document, they will be converted to the document path string to avoid circular reference issues.
+
+Upon adding a listener using this function, the success callback function will be invoked with an `id` event which specifies the native ID of the added listener.
+This can be used to subsequently remove the listener using [`removeFirestoreListener()`](#removefirestorelistener).
+For example:
+
+```json
+{
+  "eventType": "id",
+  "id": 12345
+}
+```
+
+The callback will also be immediately invoked again with a `change` event which contains a snapshot of the document at the time of adding the listener.
+Then each time the document is changed, either locally or remotely, the callback will be invoked with another `change` event detailing the change.
+
+Event fields:
+- `source` - specifies if the change was `local` (made locally on the app) or `remote` (made via the server).
+- `fromCache` - specifies whether the snapshot was read from local cache
+- `snapshot` - a snapshot of document at the time of the change.
+    - May not be present if change event is due to a metadata change.
+
+For example:
+
+```json
+{
+    "eventType": "change",
+    "source": "remote",
+    "fromCache": true,
+    "snapshot": {
+        "a_field": "a_value"
+    }
+}
+```
+
+See the [Firestore documentation](https://firebase.google.com/docs/firestore/query-data/listen) for more info on real-time listeners.
+
+
+**Parameters**:
+- {function} success - callback function to call on successfully adding the listener AND on subsequently detecting changes to that document.
+Will be passed an {object} representing the `id` or `change` event.
+- {function} error - callback function which will be passed a {string} error message as an argument.
+- {string} documentId - document ID of the document to listen to.
+- {string} collection - name of top-level collection to listen to the document in.
+- {boolean} includeMetadata - whether to listen for changes to document metadata.
+    - Defaults to `false`.
+    - See [Events for metadata changes](https://firebase.google.com/docs/firestore/query-data/listen#events-metadata-changes) for more info.
+
+
+```javascript
+var documentId = "my_doc";
+var collection = "my_collection";
+var includeMetadata = true;
+var listenerId;
+
+FirebasePlugin.listenToDocumentInFirestoreCollection(function(event){
+    switch(event.eventType){
+        case "id":
+            listenerId = event.id;
+            console.log("Successfully added document listener with id="+listenerId);
+            break;
+        case "change":
+            console.log("Detected document change");
+            console.log("Source of change: " + event.source);
+            console.log("Read from local cache: " + event.fromCache);
+            if(event.snapshot){
+                console.log("Document snapshot: " + JSON.stringify(event.snapshot));
+            }
+            break;
+    }
+}, function(error){
+    console.error("Error adding listener: "+error);
+}, documentId, collection, includeMetadata);
+```
+
+### listenToFirestoreCollection
+Adds a listener to detect real-time changes to documents in a Firestore collection.
+
+Note: If the documents in the collection contain references to another document, they will be converted to the document path string to avoid circular reference issues.
+
+Upon adding a listener using this function, the success callback function will be invoked with an `id` event which specifies the native ID of the added listener.
+This can be used to subsequently remove the listener using [`removeFirestoreListener()`](#removefirestorelistener).
+For example:
+
+```json
+{
+  "eventType": "id",
+  "id": 12345
+}
+```
+The callback will also be immediately invoked again with a `change` event which contains a snapshot of all documents in the collection at the time of adding the listener.
+Then each time document(s) in the collection change, either locally or remotely, the callback will be invoked with another `change` event detailing the change.
+
+Event fields:
+- `documents` - key/value list of document changes indexed by document ID. For each document change:
+    - `source` - specifies if the change was `local` (made locally on the app) or `remote` (made via the server).
+    - `fromCache` - specifies whether the snapshot was read from local cache
+    - `type` - specifies the change type:
+        - `added` - document was added to collection
+        - `modified` - document was modified in collection
+        - `removed` - document was removed from collection
+        - `metadata` - document metadata changed
+    - `snapshot` - a snapshot of document at the time of the change.
+        - May not be present if change event is due to a metadata change.
+
+For example:
+
+```json
+{
+    "eventType": "change",
+    "documents":{
+        "a_doc": {
+            "source": "remote",
+            "fromCache": false,
+            "type": "added",
+            "snapshot": {
+                "a_field": "a_value"
+            }
+        },
+        "another_doc": {
+            "source": "remote",
+            "fromCache": false,
+            "type": "removed",
+            "snapshot": {
+                "foo": "bar"
+            }
+        }
+    }
+}
+```
+
+See the [Firestore documentation](https://firebase.google.com/docs/firestore/query-data/listen) for more info on real-time listeners.
+
+
+**Parameters**:
+- {function} success - callback function to call on successfully adding the listener AND on subsequently detecting changes to that collection.
+Will be passed an {object} representing the `id` or `change` event.
+- {function} error - callback function which will be passed a {string} error message as an argument.
+- {string} collection - name of top-level collection to listen to the document in.
+- {array} filters (optional) - a list of filters to sort/filter the documents returned from your collection.
+    - See [fetchFirestoreCollection](#fetchfirestorecollection)
+- {boolean} includeMetadata (optional) - whether to listen for changes to document metadata.
+    - Defaults to `false`.
+    - See [Events for metadata changes](https://firebase.google.com/docs/firestore/query-data/listen#events-metadata-changes) for more info.
+
+
+```javascript
+var collection = "my_collection";
+var filters = [
+    ['where', 'field', '==', 'value'],
+    ['orderBy', 'field', 'desc']
+];
+var includeMetadata = true;
+var listenerId;
+
+FirebasePlugin.listenToFirestoreCollection(function(event){
+    switch(event.eventType){
+        case "id":
+            listenerId = event.id;
+            console.log("Successfully added collection listener with id="+listenerId);
+            break;
+        case "change":
+            console.log("Detected collection change");
+            if(event.documents){
+                for(var documentId in event.documents){
+                    console.log("Document ID: " + documentId);
+
+                    var docChange = event.documents[documentId];
+                    console.log("Source of change: " + docChange.source);
+                    console.log("Change type: " + docChange.type);
+                    console.log("Read from local cache: " + docChange.fromCache);
+                    if(docChange.snapshot){
+                        console.log("Document snapshot: " + JSON.stringify(docChange.snapshot));
+                    }
+                }
+            }
+            break;
+    }
+}, function(error){
+    console.error("Error adding listener: "+error);
+}, collection, filters, includeMetadata);
+```
+
+### removeFirestoreListener
+Removes an existing native Firestore listener (see [detaching listeners](https://firebase.google.com/docs/firestore/query-data/listen#detach_a_listener)) added with [`listenToDocumentInFirestoreCollection()`](#listentodocumentinfirestorecollection) or [`listenToFirestoreCollection()`](#listentofirestorecollection).
+
+Upon adding a listener using either of the above functions, the success callback function will be invoked with an `id` event which specifies the native ID of the added listener.
+For example:
+
+```json
+{
+  "eventType": "id",
+  "id": 12345
+}
+```
+This can be used to subsequently remove the listener using this function.
+You should remove listeners when you're not using them as while active they maintain a continual HTTP connection to the Firebase servers costing memory, bandwith and money: see [best practices for realtime updates](https://firebase.google.com/docs/firestore/best-practices#realtime_updates) and [billing for realtime updates](https://firebase.google.com/docs/firestore/pricing#listens).
+
+**Parameters**:
+- {function} success - callback function to call on successfully removing the listener.
+- {function} error - callback function which will be passed a {string} error message as an argument.
+- {string|number} listenerId - ID of the listener to remove
+
+```javascript
+FirebasePlugin.removeFirestoreListener(function(){
+    console.log("Successfully removed listener");
+}, function(error){
+    console.error("Error removing listener: "+error);
+}, listenerId);
+```
+
+## Functions
+Exposes API methods of the [Firebase Functions SDK](https://firebase.google.com/docs/functions/callable).
+
+### functionsHttpsCallable
+Call a firebase [Https Callable function](https://firebase.google.com/docs/functions/callable)
+
+**Parameters**:
+- {string} name - the name of the function
+- {object} args - arguments to send to the function
+- {function} success - callback function to call on successfully completed the function call.
+Will be passed an {object/array/string} containing the data returned by the function
+- {function} error - callback function which will be passed a {string/object} error message as an argument.
+
+```javascript
+var functionName = "myBackendFunction";
+var args = {
+    arg1: 'First argument',
+    arg2: 'second argument'
+};
+FirebasePlugin.functionsHttpsCallable(functionName, args, function(result){
+    console.log("Successfully called function: "+JSON.stringify(result));
+}, function(error){
+    console.error("Error calling function: "+JSON.stringify(error));
+});
+```
+
+## Installations
+Exposes API methods of the [Firebase Installations SDK](https://firebase.google.com/docs/projects/manage-installations).
+
+### getInstallationId
+[Returns the current Firebase installation ID (FID)](https://firebase.google.com/docs/projects/manage-installations#retrieve_client_identifers).
+
+**Parameters**:
+- {function} success - callback function to call on successfully completed the function call.
+Will be passed the {string} Firebase installation ID.
+- {function} error - callback function which will be passed a {string/object} error message as an argument.
+
+```javascript
+FirebasePlugin.getInstallationId(function(id){
+        console.log("Got installation ID: " + id);
+    }, function(error) {
+        console.error("Failed to get installation ID", error);
+    });
+```
+
+### getInstallationToken
+[Returns the JWT auth token](https://firebase.google.com/docs/projects/manage-installations#retrieve-fis-token) for the current Firebase installation ID (FID).
+
+**Parameters**:
+- {function} success - callback function to call on successfully completed the function call.
+Will be passed the {string} Firebase installation token.
+- {function} error - callback function which will be passed a {string/object} error message as an argument.
+
+```javascript
+FirebasePlugin.getInstallationToken(function(token){
+        console.log("Got installation token: " + token);
+    }, function(error) {
+        console.error("Failed to get installation token", error);
+    });
+```
+
+### getInstallationId
+[Deletes the current Firebase installation ID (FID)](https://firebase.google.com/docs/projects/manage-installations#delete-fid).
+
+**Parameters**:
+- {function} success - callback function to call on successfully completed the function call.
+- {function} error - callback function which will be passed a {string/object} error message as an argument.
+
+```javascript
+FirebasePlugin.deleteInstallationId(function(){
+        console.log("Deleted installation ID");
+    }, function(error) {
+        console.error("Failed to delete installation ID", error);
+    });
+```
+
+### registerInstallationIdChangeListener
+Registers a Javascript function to invoke when [Firebase Installation ID changes](https://firebase.google.com/docs/projects/manage-installations#monitor-id-lifecycle).
+
+iOS only.
+
+**Parameters**:
+- {function} fn - callback function to invoke when installation ID changes.
+    - Will be a passed a single {string} argument which is the new installation ID.
+
+Example usage:
+
+```javascript
+    FirebasePlugin.registerInstallationIdChangeListener(function(installationId){
+        console.log("New installation ID: "+installationId);
+    });
 ```
 
 # Credits
