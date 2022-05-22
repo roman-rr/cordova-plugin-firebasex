@@ -1,4 +1,28 @@
-# Version 10.2.0
+# Version 11.0.0-cli
+* (Android & iOS): Bump pinned Firebase SDK component versions to latest releases.
+* Added support for `didCrashOnPreviousExecution()` and `setCrashlyticsCustomKey()`
+    * Merged from PR [#492](https://github.com/dpa99c/cordova-plugin-firebasex/pull/492).
+* (Doc) Clarify requirements for parameters passed to `logEvent()`.
+    * Resolves [#491](https://github.com/dpa99c/cordova-plugin-firebasex/issues/491).
+* Implement Remote Config v2 API
+    * Add new methods: `fetchAndActivate()`, `resetRemoteConfig()`, `getAll()`
+    * *BREAKING CHANGE:* Change API signature and implementations for `setConfigSettings()` and `setDefaults()` on Android,
+    and implement for iOS.
+    * Resolves [#155](https://github.com/dpa99c/cordova-plugin-firebasex/issues/155).
+* (Android) *BREAKING CHANGE:* Remove dependency on `cordova-plugin-androidx` and `cordova-plugin-androidx-adapter`
+* Add support for Firestore real-time listeners: `listenToDocumentInFirestoreCollection()`, `listenToFirestoreCollection()`, `removeFirestoreListener()`
+* (Types) Update typedef for recent API changes
+* (iOS) Set Sign In with Apple entitlement automatically.
+    * Resolves [#485](https://github.com/dpa99c/cordova-plugin-firebasex/issues/485).
+* Add `authenticateUserWithEmailAndPassword()`
+    * Resolves [#486](https://github.com/dpa99c/cordova-plugin-firebasex/issues/486).
+* (iOS) Remove superfluous braces from `FirebasePluginMessageReceiver.h`
+    * Resolves [#493](https://github.com/dpa99c/cordova-plugin-firebasex/issues/493).
+* Support optional `valueType` parameter when filtering Firestore collections.
+    * Resolves [#496](https://github.com/dpa99c/cordova-plugin-firebasex/issues/496).
+* (iOS) Add support for foreground and destructive `UNNotificationActionOptions`
+    * Cherrypicked from PR [#487](https://github.com/dpa99c/cordova-plugin-firebasex/pull/487)
+# Version 10.2.0-cli
 * (iOS) Fix crashes on receiving push notifications on iOS due to delegate chaining.
 ** Resolves [#385](https://github.com/dpa99c/cordova-plugin-firebasex/issues/385).
 ** Reverts commit 4e9a0f4a1fd4ceb871af40629e1ddf146f287ca8 "co-existence with cordova-plugin-local-notification on iOS"
@@ -8,8 +32,6 @@
     * Merged from PR [#482](https://github.com/dpa99c/cordova-plugin-firebasex/pull/482).
 * (Android): Handle task outcomes where task is not successful but exception is null.
     * Resolves [#473](https://github.com/dpa99c/cordova-plugin-firebasex/issues/473).
-* (Android) Add missing Inapp Messaging component.
-    * Resolves [#478](https://github.com/dpa99c/cordova-plugin-firebasex/issues/478).
 * (iOS): Bump minimum required Cocoapods version to v1.9.1 due to requirement by Firestore v6.28.1
 * (Android) (Bug fix) Fix all cases where task outcomes are being incorrectly handled.
 * (iOS) Update remote config to use `activateWithCompletion` instead of deprecated `activateWithCompletionHandler` for activating remote config.
@@ -19,29 +41,28 @@
     * Merged from PR [#465](https://github.com/dpa99c/cordova-plugin-firebasex/pull/465).
     * Resolves [#452](https://github.com/dpa99c/cordova-plugin-firebasex/issues/452).
 
-# Version 10.1.2
+# Version 10.1.2-cli
 * (iOS): Bump Firebase SDK versions to v6.28.1 to resolve build freeze issue.
     * Resolves [#460](https://github.com/dpa99c/cordova-plugin-firebasex/issues/460).
 
-# Version 10.1.1
+# Version 10.1.1-cli
 * (iOS) Fix regression bug in `getToken()` introduced by [35a2a68e8db3808723c9f2fcb6aa176021f6c77a](https://github.com/dpa99c/cordova-plugin-firebasex/commit/35a2a68e8db3808723c9f2fcb6aa176021f6c77a).
     * Resolves [#456](https://github.com/dpa99c/cordova-plugin-firebasex/issues/456).
 * (iOS) Update to use Firebase SDK v6.28.0
     * Resolves [#453](https://github.com/dpa99c/cordova-plugin-firebasex/issues/453).
 
-# Version 10.1.0
+# Version 10.1.0-cli
 * (iOS) Use precompiled pod for Firestore to reduce build times.
     * *BREAKING CHANGE:* Requires `cocoapods>=1.9` (previously `cocoapods>=1.8`).
-    * Adds hook script to check local cocoapods version during plugin install.
+    * Adds hook script to check local cocoapods version during plugin install. 
     * Based on PR [#440](https://github.com/dpa99c/cordova-plugin-firebasex/pull/440).
     * Resolves [#407](https://github.com/dpa99c/cordova-plugin-firebasex/issues/407).
 * (Android) Fixed regression bug related to default Crashlytics permission.
     * See [this comment](https://github.com/dpa99c/cordova-plugin-firebasex/issues/335#issuecomment-651218052).
 * (iOS) Bump pinned Firebase SDK versions to latest 6.27.0
     * See [release notes](https://firebase.google.com/support/release-notes/ios#version_6270_-_june_16_2020)
-* (Android): Bump Firebase SDK versions to latest for Analytics, Cloud Messaging & Inapp Messaging.
-
-# Version 10.0.0
+* (Android): Bump Firebase SDK versions to latest for Analytics & Inapp Messaging.
+# Version 10.0.0-cli
 * *BREAKING CHANGE:* (Android, iOS) Migrate from Fabric Crashlytics SDK to Firebase Crashlytics SDK.
 ** Based on [this commit](https://github.com/vickydlion/cordova-plugin-firebasex/commit/0dfb5753edcd9fc19a0e7a52fdd4fc79d6d976ea) in [PR #432](https://github.com/dpa99c/cordova-plugin-firebasex/pull/432).
 ** Resolves [#335](https://github.com/dpa99c/cordova-plugin-firebasex/issues/335).
@@ -55,37 +76,39 @@
 * (iOS) Fix escaping already escaped json.
     * Merged from PR [#430](https://github.com/dpa99c/cordova-plugin-firebasex/pull/430).
     * Further resolves [#401](https://github.com/dpa99c/cordova-plugin-firebasex/issues/401).
-* (Android): Fix parsing of existing `colors.xml` when it contains multiple existing `<color>` to prevent overwriting the existing values.
+* (Android): Fix parsing of existing `colors.xml` when it contains multiple existing `<color>` to prevent overwriting the existing values. 
     * Resolves [#436](https://github.com/dpa99c/cordova-plugin-firebasex/issues/436).
 * (Android, iOS): Return success/failure result when subscribing/unsubscribing from topics.
     * Resolves [#422](https://github.com/dpa99c/cordova-plugin-firebasex/issues/422).
-
-# Version 9.1.2
+    
+# Version 9.1.2-cli
 * (Android) Fix retrieval of auth provider ID - [see here for more info](https://github.com/firebase/FirebaseUI-Android/issues/329#issuecomment-564409912)
 * (iOS) Align retrieval of auth provider ID with Android.
 * (Typing): correct return type of a method
     * Merged from PR [#390](https://github.com/dpa99c/cordova-plugin-firebasex/pull/390).
 * (Documentation) Update guidance and requirements when opening issues
-* (iOS): Fix escaping of line endings in multi-line log messages being sent from native iOS implementation to JS console.
+* (iOS): Fix escaping of line endings in multi-line log messages being sent from native iOS implementation to JS console. 
     * Resolves [#401](https://github.com/dpa99c/cordova-plugin-firebasex/issues/401).
-* (iOS): Set shouldEstablishDirectChannel via a  plugin variable which defaults to false.
+* (iOS): Set shouldEstablishDirectChannel via a  plugin variable which defaults to false. 
     Resolves [#406](https://github.com/dpa99c/cordova-plugin-firebasex/issues/406).
 * Bump androidx plugin version dependencies.
     Resolves [#418](https://github.com/dpa99c/cordova-plugin-firebasex/issues/418).
 
-# Version 9.1.1
+# Version 9.1.1-cli
 * (iOS): Bump Firebase SDK components to v6.23.0.
     * Relates to [#373](https://github.com/dpa99c/cordova-plugin-firebasex/issues/373).
     * See https://firebase.google.com/support/release-notes/ios#version_6230_-_april_21_2020.
 * (Android) Bump Firebase SDK (and other Gradle dependencies) to latest versions.
     * See https://firebase.google.com/support/release-notes/android#2020-04-23
-
-# Version 9.1.0
+    
+# Version 9.1.0-cli
 * (Android & iOS) *BREAKING CHANGE*: Add support for filters to `fetchDocumentInFirestoreCollection()`
     * *BREAKING CHANGE* to function signature.
     * Merged from PR [#367](https://github.com/dpa99c/cordova-plugin-firebasex/pull/367).
+* (Android) Fix regression bug which causes CLI builds to fail on Android. 
+Resolves [#369](https://github.com/dpa99c/cordova-plugin-firebasex/issues/369).  
 
-# Version 9.0.3
+# Version 9.0.3-cli
 * (Android & iOS) Add `reloadCurrentUser()`
 * (Doc) `createChannel()` suggestion for multiple sounds
     * Merged from PR [#225](https://github.com/dpa99c/cordova-plugin-firebasex/pull/225).
@@ -93,15 +116,17 @@
     * Merged from PR [#363](https://github.com/dpa99c/cordova-plugin-firebasex/pull/363).
 * (Android & iOS) Add `signInUserWithCustomToken()` AND `signInUserAnonymously()` auth methods
     * Merged from PR [#359](https://github.com/dpa99c/cordova-plugin-firebasex/pull/359).
+    
+# Version 9.0.2-cli
 
-# Version 9.0.2
 * (Android): Don't display app icon for large notification icon on Android. Resolves [#343](https://github.com/dpa99c/cordova-plugin-firebasex/issues/343).
 * (Android & iOS) Sign out of Google signing out of Firebase. Resolves [#353](https://github.com/dpa99c/cordova-plugin-firebasex/issues/353).
 * (Android & iOS) Add `documentExistsInFirestoreCollection()` and fix resolution of `fetchDocumentInFirestoreCollection()`.
 
-# Version 9.0.1
-* Re-add Firebase Inapp Messaging SDK component to master branch.
-* Document `cli_build` branch. See [#326](https://github.com/dpa99c/cordova-plugin-firebasex/issues/326).
+# Version 9.0.1-cli
+* Document `cli_build` branch.
+* *BREAKING CHANGE*: Remove Firebase Inapp Messaging and Google Tag Manager SDK components due to causing Cordova CLI build issues.
+    * Resolves [#326](https://github.com/dpa99c/cordova-plugin-firebasex/issues/326).
 
 # Version 9.0.0
 * *BREAKING CHANGE*: Change method signature of `setCrashlyticsCollectionEnabled()` to `(enabled, success, error)` (from `()`) to allow enabling/disabling of Crashlytics at runtime and align it with `setPerformanceCollectionEnabled()` and `setAnalyticsCollectionEnabled()`
