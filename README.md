@@ -37,6 +37,7 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [Android & iOS](#android--ios)
     - [Android only](#android-only)
     - [iOS only](#ios-only)
+    - [Post-install plugin variables](#post-install-plugin-variables)
   - [Supported Cordova Versions](#supported-cordova-versions)
   - [Supported Mobile Platform Versions](#supported-mobile-platform-versions)
   - [Migrating from cordova-plugin-firebase](#migrating-from-cordova-plugin-firebase)
@@ -125,6 +126,7 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [setScreenName](#setscreenname)
     - [setUserId](#setuserid)
     - [setUserProperty](#setuserproperty)
+    - [initiateOnDeviceConversionMeasurement](#initiateondeviceconversionmeasurement)
   - [Crashlytics](#crashlytics)
     - [setCrashlyticsCollectionEnabled](#setcrashlyticscollectionenabled)
     - [didCrashOnPreviousExecution](#didcrashonpreviousexecution)
@@ -161,10 +163,12 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [authenticateUserWithApple](#authenticateuserwithapple)
     - [authenticateUserWithMicrosoft](#authenticateuserwithmicrosoft)
     - [authenticateUserWithFacebook](#authenticateuserwithfacebook)
+    - [authenticateUserWithOAuth](#authenticateuserwithoauth)
     - [signInWithCredential](#signinwithcredential)
     - [linkUserWithCredential](#linkuserwithcredential)
     - [reauthenticateWithCredential](#reauthenticatewithcredential)
     - [registerAuthStateChangeListener](#registerauthstatechangelistener)
+    - [registerAuthIdTokenChangeListener](#registerauthidtokenchangelistener)
     - [useAuthEmulator](#useauthemulator)
     - [getClaims](#getclaims)
   - [Remote Config](#remote-config)
@@ -201,6 +205,9 @@ To help ensure this plugin is kept updated, new features are added and bugfixes 
     - [getInstallationToken](#getinstallationtoken)
     - [getInstallationId](#getinstallationid-1)
     - [registerInstallationIdChangeListener](#registerinstallationidchangelistener)
+  - [Miscellaneous](#miscellaneous)
+    - [registerApplicationDidBecomeActiveListener](#registerapplicationdidbecomeactivelistener)
+    - [registerApplicationDidEnterBackgroundListener](#registerapplicationdidenterbackgroundlistener)
 - [Credits](#credits)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -219,11 +226,22 @@ cordova plugin add cordova-plugin-firebasex
 The following Cordova plugin variables are supported by the plugin.
 Note that these must be set at plugin installation time. If you wish to change plugin variables, you'll need to uninstall the plugin and reinstall it with the new variable values.
 
+Plugin variables are initially set by specifying them during plugin installation, for example:
+`cordova plugin add cordova-plugin-firebasex --variable FIREBASE_ANALYTICS_WITHOUT_ADS=true`
+
+Once the plugin is installed, you can change the plugin variable values either by fully uninstalling/reinstalling the plugin, for example:
+`cordova plugin rm cordova-plugin-firebasex && cordova plugin add cordova-plugin-firebasex --variable FIREBASE_ANALYTICS_WITHOUT_ADS=false`
+
+Or you can manually edit the values in your project's `package.json` under `cordova.plugins.cordova-plugin-firebasex` and reinstall the plugin:
+`cordova plugin rm cordova-plugin-firebasex --nosave && cordova plugin add cordova-plugin-firebasex --nosave`
+
 ### Android & iOS
-- `FIREBASE_ANALYTICS_COLLECTION_ENABLED` - whether to automatically enable Firebase Analytics data collection on app startup
-- `FIREBASE_PERFORMANCE_COLLECTION_ENABLED` - whether to automatically enable Firebase Performance data collection on app startup
-- `FIREBASE_CRASHLYTICS_COLLECTION_ENABLED` - whether to automatically enable Firebase Crashlytics data collection on app startup
-- `FIREBASE_FCM_AUTOINIT_ENABLED` - whether to automatically enable FCM registration on app startup
+- `FIREBASE_ANALYTICS_COLLECTION_ENABLED` - whether to automatically enable Firebase Analytics data collection on app startup. Defaults to true.
+- `FIREBASE_PERFORMANCE_COLLECTION_ENABLED` - whether to automatically enable Firebase Performance data collection on app startup. Defaults to true.
+- `FIREBASE_CRASHLYTICS_COLLECTION_ENABLED` - whether to automatically enable Firebase Crashlytics data collection on app startup. Defaults to true.
+- `FIREBASE_FCM_AUTOINIT_ENABLED` - whether to automatically enable FCM registration on app startup. Defaults to true.
+- `FIREBASE_ANALYTICS_WITHOUT_ADS` - whether to disable advertising ID collection in Analytics. Defaults to false.
+  - Note that this is a [post-install plugin variable](#post-install-plugin-variables) so an additional step is required to activate the plugin variable the first time it is specified.
 See [Disable data collection on startup](#disable-data-collection-on-startup) for more info.
 
 ### Android only
@@ -265,11 +283,12 @@ See [Specifying Android library versions](#specifying-android-library-versions) 
   - Since some users experienced long build times due to the Firestore pod (see [#407](https://github.com/dpa99c/cordova-plugin-firebasex/issues/407))
   - However other users have experienced build issues with the pre-compiled version (see [#735](https://github.com/dpa99c/cordova-plugin-firebasex/issues/735))
   - Defaults to `false` if not specified.
+  - Note that this is a [post-install plugin variable](#post-install-plugin-variables) so an additional step is required to activate the plugin variable the first time it is specified.
 - `IOS_STRIP_DEBUG` - prevents symbolification of all libraries included via Cocoapods. See [Strip debug symbols](#strip-debug-symbols) for more info.
     - e.g.  `--variable IOS_STRIP_DEBUG=true`
     - Defaults to `false` if not specified.
 - `SETUP_RECAPTCHA_VERIFICATION` - automatically sets up reCAPTCHA verification for phone authentication on iOS. See [verifyPhoneNumber](#verifyphonenumber) for more info.
-    - e.g.  `--variable IOS_STRIP_DEBUG=true`
+    - e.g.  `--variable SETUP_RECAPTCHA_VERIFICATION=true`
     - Defaults to `false` if not specified.
 - `IOS_SHOULD_ESTABLISH_DIRECT_CHANNEL` - If `true` Firebase Messaging will automatically establish a socket-based, direct channel to the FCM server.
    - e.g.  `--variable IOS_SHOULD_ESTABLISH_DIRECT_CHANNEL=true`
@@ -285,6 +304,23 @@ See [Specifying Android library versions](#specifying-android-library-versions) 
   - `--variable IOS_ENABLE_CRITICAL_ALERTS_ENABLED=true`
   - See [iOS critical notifications](#ios-critical-notifications)
   - Ensure the associated app provisioning profile also has this capability enabled.
+- `IOS_FCM_ENABLED` - allows to completely disable push notifications functionality of the plugin (not just the automatic initialization that is covered by `FIREBASE_FCM_AUTOINIT_ENABLED` variable).
+  - Defaults to `true`, if not specified; i.e. FCM is enabled by default.
+  - This can be handy if you are using this plugin for e.g. Crashlytics and handle push notifications using another plugin. Use `--variable IOS_FCM_ENABLED=false` in this case.
+- `IOS_ON_DEVICE_CONVERSION_ANALYTICS` - whether to include the On-Device Conversion component of the Firebase SDK.
+  - Defaults to `false` if not specified.
+  - If `true`, the component will be included and [initiateOnDeviceConversionMeasurement](#initiateondeviceconversionmeasurement) can be called at run-time to enable it.
+  - Note that this is a [post-install plugin variable](#post-install-plugin-variables) so an additional step is required to activate the plugin variable the first time it is specified.
+
+### Post-install plugin variables
+- Some of the plugin variables above are used to optionally include additional components of the Firebase SDKs.
+- Since Cordova does not support using plugin variables to optionally include plugin dependencies, this plugin implements a [custom npm post-install script](scripts/post_install.js) to enable this behaviour.
+- This script is executed automatically after the plugin is installed and will apply the plugin variables defined in your project's `package.json` to the plugin's `plugin.xml` file **before** Cordova parses the `plugin.xml` file.
+- However, the **first time** you specify a new plugin variable, the post-install script will be executed **before** Cordova has added the plugin variable to the `package.json` file so the plugin variable will not be applied to the `plugin.xml` file.
+- **IMPORTANT**: Therefore if you specify a plugin variable for the first time, you must **reinstall** the plugin for the plugin variable to be applied to the `plugin.xml` file:
+  - e.g. `cordova plugin rm cordova-plugin-firebasex --nosave && cordova plugin add cordova-plugin-firebasex --nosave`
+  - Note: you do not have to specify the plugin variable(s) again when reinstalling the plugin as they will be read from the `package.json` file.
+
 
 ## Supported Cordova Versions
 - cordova: `>= 10`
@@ -409,7 +445,12 @@ This plugin **will not work** with remote cloud build services that do not suppo
 The hook scripts used by this plugin are essential to configure the native platform projects for use with the Firebase SDK and therefore if they are not executed, the plugin will not work correctly: either the build will fail or the app containing the plugin will crash at runtime.
 
 Even if the remote build service supports Cordova hook scripts, it is hard to diagnose the cause of build issue because the environment is not under your direct control.
-Therefore support for using this plugin can only be offered when building projects in a **local build environment** (i.e. your own development machine) over which you have full control and the ability to update/upgrade any components in the OS.
+Therefore a **local build environment** is highly recommended since you have full control and the ability to update/upgrade any components in the OS.
+Support for using this plugin can only be offered when building projects in a local environment. (i.e. your own development machine).
+
+However if you are unable to build locally and therefore must use a remote build environment, then [VoltBuilder](https://volt.build/) is recommended for use with this plugin as it supports Cordova hook scripts and its developers have explicitly tested building with this plugin to ensure compatibility.
+
+
 
 ## Capacitor support
 This plugin **does not currently support [Capacitor](https://capacitorjs.com/)**. If you want to use Firebase with Capacitor, you should use [Capacitor Firebase](https://github.com/capawesome-team/capacitor-firebase) or the [Firebase JS SDK](https://firebase.google.com/docs/web/setup) instead.
@@ -653,7 +694,7 @@ Before [opening a bug issue](https://github.com/dpa99c/cordova-plugin-firebasex/
     - Ask for help on StackOverflow, Ionic Forums, etc.
     - Use the [example project](https://github.com/dpa99c/cordova-plugin-firebasex-test) as a known working reference
     - Any issues requesting support will be closed immediately.
-- *DO NOT* open issues related to the  [Ionic Typescript wrapper for this plugin](https://github.com/ionic-team/ionic-native/blob/master/src/%40ionic-native/plugins/firebase-x/index.ts)
+- *DO NOT* open issues related to the  [Ionic Typescript wrapper for this plugin](https://github.com/ionic-team/ionic-native/blob/master/src/%40awesome-cordova-plugins/plugins/firebase-x/index.ts)
     - This is owned/maintained by [Ionic](https://github.com/ionic-team) and is not part of this plugin
     - Please raise such issues/PRs against [Ionic Native](https://github.com/ionic-team/ionic-native/) instead.
 	- To verify an if an issue is caused by this plugin or its Typescript wrapper, please re-test using the vanilla Javascript plugin interface (without the Ionic Native wrapper).
@@ -1461,6 +1502,9 @@ The following iOS-specific keys are supported and should be placed inside the `d
     - To play the default notification sound, set `"sound": "default"`.
     - To display a silent notification (no sound), omit the `sound` key from the message.
 - `notification_ios_badge` - Badge number to display on app icon on home screen.
+- `notification_ios_image_jpg` - Specifies the `jpg` image notification, to use this you need to have configured the `NotificationService` - [Tutorial to set it up](docs/IOS_NOTIFICATION_SERVICE.md)
+- `notification_ios_image_png` - Specifies the `png` image notification, to use this you need to have configured the `NotificationService` - [Tutorial to set it up](docs/IOS_NOTIFICATION_SERVICE.md)
+- `notification_ios_image_gif` - Specifies the `gif` image notification, to use this you need to have configured the `NotificationService` - [Tutorial to set it up](docs/IOS_NOTIFICATION_SERVICE.md)
 
 For example:
 ```json
@@ -1471,7 +1515,8 @@ For example:
     "notification_body" : "Notification body",
     "notification_title": "Notification title",
     "notification_ios_sound": "my_sound.caf",
-    "notification_ios_badge": 1
+    "notification_ios_badge": 1,
+    "notification_ios_image_png": "https://example.com/avatar.png"
   }
 }
 ```
@@ -1683,6 +1728,8 @@ On Android, the `POST_NOTIFICATIONS` permission must be added to the `AndroidMan
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </config-file>
 ```
+
+Note, in addition to removing and re-adding the android platform, you may need to add the following attribute to `<widget>` in your `config.xml` file to avoid a parse error when building: `xmlns:android="http://schemas.android.com/apk/res/android"`
 
 **Parameters**:
 - {function} success - callback function which will be passed the {boolean} permission result as an argument
@@ -2192,6 +2239,25 @@ Set a user property for use in Analytics:
 
 ```javascript
 FirebasePlugin.setUserProperty("name", "value");
+```
+
+### initiateOnDeviceConversionMeasurement
+Initiates [on-device conversion measurement](https://firebase.google.com/docs/tutorials/ads-ios-on-device-measurement) using either user's email address or phone number.
+iOS only.
+
+**Parameters**:
+- {object} userIdentifier - user identifier as either `emailAddress` or `phoneNumber` key
+- {function} success - callback function which will be invoked on success.
+  Will be passed a {boolean} indicating if the setting is enabled.
+- {function} error - (optional) callback function which will be passed a {string} error message as an argument
+
+```javascript
+FirebasePlugin.initiateOnDeviceConversionMeasurement({emailAddress: "me@here.com"},
+function(){
+    console.log("On device conversion measurement initiated");
+}, function(error){
+    console.error("Error initiating on device conversion measurement: "+error);
+});
 ```
 
 ## Crashlytics
@@ -3082,6 +3148,36 @@ To use Google Sign-in in your Android app you need to do the following:
 
 For details how to do the above, see the [Google Sign-In on Android page](https://firebase.google.com/docs/auth/android/google-signin) in the Firebase documentation.
 
+<br>
+
+**Server side verification**
+
+Once the id token has been obtained from `authenticateUserWithGoogle()` it can be sent to your server to get access to more information about the user's google account. However, it's recommended by Google that the id token be validated on your server before being used. You should generally not trust tokens supplied by clients without performing this validation. While you can write the code to perform this check yourself, it's strongly recommended that you use a library supplied by Google  such as [google-auth-library](https://www.npmjs.com/package/google-auth-library) for this purpose.
+
+The following is sample coded taken from [Google documentation](https://developers.google.com/identity/sign-in/web/backend-auth) for performing a server side verification of an id token:
+
+```javascript
+const {OAuth2Client} = require('google-auth-library');
+
+const client = new OAuth2Client(CLIENT_ID);
+
+async function verify() {
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+        // Or, if multiple clients access the backend:
+        //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+    });
+    const payload = ticket.getPayload();
+    const userid = payload['sub'];
+    // If request specified a G Suite domain:
+    // const domain = payload['hd'];
+}
+verify().catch(console.error);
+```
+
+<br>
+
 ### authenticateUserWithApple
 Authenticates the user with an Apple account using Sign In with Apple to obtain a credential that can be used to sign the user in/link to an existing user account/reauthenticate the user.
 
@@ -3131,11 +3227,14 @@ Authenticates the user with a Microsoft account using Sign In with Oauth to obta
 - {function} success - callback function to pass {object} credentials to as an argument. The credential object has the following properties:
     - {string} id - the identifier of a native credential object which can be used for signing in the user.
 - {function} error - callback function which will be passed a {string} error message as an argument
+- {string} locale - (Android only) the language to display Microsoft's Sign-in screen in.
+    - Defaults to "en" (English) if not specified.
+    - See [the Microsoft documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/msal-localization#supported-languages) for a list of supported locales.
+    - The value is ignored on iOS which uses the locale of the device to determine the display language.
 
 Example usage:
 
 ```javascript
-
 FirebasePlugin.authenticateUserWithMicrosoft(function(credential) {
     FirebasePlugin.signInWithCredential(credential, function() {
             console.log("Successfully signed in");
@@ -3144,7 +3243,7 @@ FirebasePlugin.authenticateUserWithMicrosoft(function(credential) {
         });
 }, function(error) {
     console.error("Failed to authenticate with Microsoft: " + error);
-});
+}, 'en_GB');
 ```
 
 ### authenticateUserWithFacebook
@@ -3179,6 +3278,39 @@ facebookConnectPlugin.login(["public_profile"],
         console.error("Failed to login to Facebook", error);
     }
 );
+```
+
+### authenticateUserWithOAuth
+Authenticates the user with an OpenID Connect (OIDC) compliant provider to obtain a credential that can be used to sign the user in/link to an existing user account/reauthenticate the user.
+- You must configure your OIDC provider in the Firebase console before using this method as outlined in the [Firebase documentation](https://firebase.google.com/docs/auth/web/openid-connect);
+- See Firebase documentation "Authenticate Using OpenID Connect" sections for [Android](https://firebase.google.com/docs/auth/android/openid-connect) and [iOS](https://firebase.google.com/docs/auth/ios/openid-connect) for more info.
+
+**Parameters**:
+- {function} success - callback function to pass {object} credentials to as an argument. The credential object has the following properties:
+    - {string} id - the identifier of a native credential object which can be used for signing in the user.
+- {function} error - callback function which will be passed a {string} error message as an argument
+
+Example usage:
+
+```javascript
+var providerId = 'oidc.provider';
+var customParameters = {
+    login_hint: 'user@domain.com'
+};
+var scopes = ['openid', 'profile', 'email'];
+
+FirebasePlugin.authenticateUserWithOAuth(function(credential) {
+    console.log("Successfully authenticated with oAuth provider");
+    FirebasePlugin.signInWithCredential(credential,
+        function() {
+            console.log("Successfully signed in");
+        }, function(error) {
+            console.error("Failed to sign in", error);
+        }
+    );
+}, function(error) {
+    console.error("Failed to authenticate with oAuth provider: " + error);
+}, providerId, customParameters, scopes);
 ```
 
 ### signInWithCredential
@@ -3294,6 +3426,32 @@ Example usage:
 ```javascript
     FirebasePlugin.registerAuthStateChangeListener(function(userSignedIn){
         console.log("Auth state changed: User signed " + (userSignedIn ? "in" : "out"));
+    });
+```
+
+### registerAuthIdTokenChangeListener
+Registers a Javascript function to invoke when Firebase Authentication ID token changes.
+
+This can be invoked in the following circumstances:
+- When a user signs in
+- When the current user signs out
+- When the current user changes
+- When there is a change in the current user's token
+
+**Parameters**:
+- {function} fn - callback function to invoke when ID token changes
+    - If token is present, will be a passed a single object argument with a `idToken` and `providerId` keys.
+    - If the token is not present, the function will be invoked with no arguments.
+
+Example usage:
+
+```javascript
+    FirebasePlugin.registerAuthIdTokenChangeListener(function(result){
+        if(result){
+            console.log("Auth ID token changed to: " + result.idToken + "; providerId: " + result.providerId);
+        }else{
+            console.log("Auth ID token not present");
+        }
     });
 ```
 
@@ -4151,6 +4309,41 @@ Example usage:
 ```javascript
     FirebasePlugin.registerInstallationIdChangeListener(function(installationId){
         console.log("New installation ID: "+installationId);
+    });
+```
+
+## Miscellaneous
+Functions unrelated to any specific Firebase SDK component.
+
+### registerApplicationDidBecomeActiveListener
+Registers a Javascript function to invoke when the iOS application becomes active after being in the background.
+
+- iOS only.
+
+**Parameters**:
+- {function} fn - callback function to invoke when application becomes active
+
+Example usage:
+
+```javascript
+    FirebasePlugin.registerApplicationDidBecomeActiveListener(function(){
+        console.log("Application became active");
+    });
+```
+
+### registerApplicationDidEnterBackgroundListener
+Registers a Javascript function to invoke when the iOS application is sent to the background.
+
+- iOS only.
+
+**Parameters**:
+- {function} fn - callback function to invoke when application is sent to the background
+
+Example usage:
+
+```javascript
+    FirebasePlugin.registerApplicationDidEnterBackgroundListener(function(){
+        console.log("Application send to background");
     });
 ```
 

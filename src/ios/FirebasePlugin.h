@@ -1,6 +1,6 @@
 #import <Cordova/CDV.h>
 #import "AppDelegate.h"
-#import "Firebase.h"
+#import "FirebaseWrapper.h"
 @import FirebaseFirestore;
 
 @interface FirebasePlugin : CDVPlugin
@@ -20,6 +20,7 @@
 - (void)authenticateUserWithApple:(CDVInvokedUrlCommand*)command;
 - (void)authenticateUserWithMicrosoft:(CDVInvokedUrlCommand*)command;
 - (void)authenticateUserWithFacebook:(CDVInvokedUrlCommand*)command;
+- (void)authenticateUserWithOAuth:(CDVInvokedUrlCommand*)command;
 - (void)signInWithCredential:(CDVInvokedUrlCommand*)command;
 - (void)linkUserWithCredential:(CDVInvokedUrlCommand*)command;
 - (void)reauthenticateWithCredential:(CDVInvokedUrlCommand*)command;
@@ -72,6 +73,7 @@
 - (void)setScreenName:(CDVInvokedUrlCommand*)command;
 - (void)setUserId:(CDVInvokedUrlCommand*)command;
 - (void)setUserProperty:(CDVInvokedUrlCommand*)command;
+- (void)initiateOnDeviceConversionMeasurement:(CDVInvokedUrlCommand*)command;
 
 // Crashlytics
 - (void)setCrashlyticsCollectionEnabled:(CDVInvokedUrlCommand*)command;
@@ -122,6 +124,8 @@
 - (void) getInstallationToken:(CDVInvokedUrlCommand*)command;
 - (void) deleteInstallationId:(CDVInvokedUrlCommand*)command;
 
+
+
 // Internals
 + (FirebasePlugin *) firebasePlugin;
 + (NSString*) appleSignInNonce;
@@ -139,6 +143,8 @@
 - (void)setDefaultChannel:(CDVInvokedUrlCommand *)command;
 - (void)deleteChannel:(CDVInvokedUrlCommand *)command;
 - (void)listChannels:(CDVInvokedUrlCommand *)command;
+
+@property (nonatomic, readonly) BOOL isFCMEnabled;
 
 @property (nonatomic, copy) NSString *notificationCallbackId;
 @property (nonatomic, copy) NSString *openSettingsCallbackId;
