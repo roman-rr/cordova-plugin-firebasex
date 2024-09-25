@@ -237,8 +237,8 @@ post_install do |installer|
             end
         end
 
-        // Added in case to fix xcode 16.0 builds
-        // Can be removed after https://github.com/dpa99c/cordova-plugin-firebasex/issues/892
+        # Added in case to fix xcode 16.0 builds
+        # Can be removed after https://github.com/dpa99c/cordova-plugin-firebasex/issues/892
         if target.name == 'BoringSSL-GRPC'
 			target.source_build_phase.files.each do |file|
 			  if file.settings && file.settings['COMPILER_FLAGS']
