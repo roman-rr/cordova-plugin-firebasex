@@ -83,6 +83,10 @@ module.exports = {
         // Generate a unique ID for our new build phase.
         var id = xcodeProject.generateUuid();
         // Create the build phase.
+        if (!xcodeProject.hash.project.objects.PBXShellScriptBuildPhase) {
+            xcodeProject.hash.project.objects.PBXShellScriptBuildPhase = {};
+        }
+
         xcodeProject.hash.project.objects.PBXShellScriptBuildPhase[id] = {
             isa: "PBXShellScriptBuildPhase",
             buildActionMask: 2147483647,
@@ -276,6 +280,26 @@ end
         }
         if(typeof pluginVariables['FIREBASE_CRASHLYTICS_COLLECTION_ENABLED'] !== 'undefined'){
             googlePlist["FirebaseCrashlyticsCollectionEnabled"] = (pluginVariables['FIREBASE_CRASHLYTICS_COLLECTION_ENABLED'] !== "false" ? "true" : "false") ;
+            googlePlistModified = true;
+        }
+        if (typeof pluginVariables['GOOGLE_ANALYTICS_ADID_COLLECTION_ENABLED'] !== 'undefined') {
+            googlePlist["GOOGLE_ANALYTICS_ADID_COLLECTION_ENABLED"] = (pluginVariables['GOOGLE_ANALYTICS_ADID_COLLECTION_ENABLED'] !== "false" ? "true" : "false");
+            googlePlistModified = true;
+        }
+        if (typeof pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE'] !== 'undefined') {
+            googlePlist["GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE"] = (pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE'] !== "false" ? "true" : "false");
+            googlePlistModified = true;
+        }
+        if (typeof pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE'] !== 'undefined') {
+            googlePlist["GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE"] = (pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE'] !== "false" ? "true" : "false");
+            googlePlistModified = true;
+        }
+        if (typeof pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA'] !== 'undefined') {
+            googlePlist["GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA"] = (pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA'] !== "false" ? "true" : "false");
+            googlePlistModified = true;
+        }
+        if (typeof pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS'] !== 'undefined') {
+            googlePlist["GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS"] = (pluginVariables['GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS'] !== "false" ? "true" : "false");
             googlePlistModified = true;
         }
         if(typeof pluginVariables['IOS_SHOULD_ESTABLISH_DIRECT_CHANNEL'] !== 'undefined'){
